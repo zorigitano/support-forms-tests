@@ -12,7 +12,35 @@ const getChoices = (options) =>
       label: option.textContent.trim(),
     }));
 
-const openAllFormSections = () => {
+const checkFormLink = ($link) => {
+  const url = $link.prop('href');
+
+  cy.request({ url, failOnStatusCode: false })
+    .its('status')
+    .should('equal', 200);
+};
+
+const openAllFormSections = (requestedFormGroup) => {
+  if (requestedFormGroup) {
+    cy.get('button.Accordion-panelTrigger')
+      .filter((_, trigger) => trigger.textContent.trim() === requestedFormGroup)
+      .should('have.length', 1)
+      .then(($triggers) => {
+        const $trigger = $triggers.eq(0);
+
+        if ($trigger.attr('aria-expanded') !== 'true') {
+          cy.wrap($trigger).click();
+        }
+
+        cy.wrap($trigger)
+          .closest('div.Accordion-panel')
+          .find('div.Accordion-panelBody a.Form-link')
+          .should(($links) => expect($links.length).to.be.greaterThan(0))
+          .each(checkFormLink);
+      });
+    return;
+  }
+
   cy.get('button.Accordion-panelTrigger')
     .should(($triggers) => expect($triggers.length).to.be.greaterThan(0))
     .each(($trigger) => {
@@ -23,13 +51,7 @@ const openAllFormSections = () => {
 
   cy.get('div.Accordion-panelBody a.Form-link')
     .should(($links) => expect($links.length).to.be.greaterThan(0))
-    .each(($link) => {
-      const url = $link.prop('href');
-
-      cy.request({ url, failOnStatusCode: false })
-        .its('status')
-        .should('equal', 200);
-    });
+    .each(checkFormLink);
 };
 
 export const submitFormsForRole = (roleLabel) => {
@@ -41,17 +63,22 @@ export const submitFormsForRole = (roleLabel) => {
 
     cy.get('select').eq(0).select(role.value);
 
-    cy.get('select').eq(1).find('option').then(($stateOptions) => {
-      const states = getChoices($stateOptions);
-      expect(states, `state options for ${roleLabel}`).not.to.be.empty;
+    cy.env(['state', 'formGroup']).then(({ state: requestedState, formGroup: requestedFormGroup }) => {
+      cy.get('select').eq(1).find('option').then(($stateOptions) => {
+        const states = getChoices($stateOptions);
+        const statesToRun = requestedState
+          ? states.filter((state) => state.value === requestedState || state.label === requestedState)
+          : states;
+        expect(statesToRun, `state options for ${roleLabel}`).not.to.be.empty;
 
-      states.forEach((state) => {
-        cy.get('select').eq(0).select(role.value);
-        cy.get('select').eq(1).select(state.value);
-        cy.contains('button', 'View Forms').click();
-        cy.get('select').eq(0).should('have.value', role.value);
-        cy.get('select').eq(1).should('have.value', state.value);
-        openAllFormSections();
+        statesToRun.forEach((state) => {
+          cy.get('select').eq(0).select(role.value);
+          cy.get('select').eq(1).select(state.value);
+          cy.contains('button', 'View Forms').click();
+          cy.get('select').eq(0).should('have.value', role.value);
+          cy.get('select').eq(1).should('have.value', state.value);
+          openAllFormSections(requestedFormGroup);
+        });
       });
     });
   });
