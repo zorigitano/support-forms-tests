@@ -29,6 +29,24 @@ export const getStateBatch = (states, batch, batchCount) =>
     .sort((first, second) => first.value.localeCompare(second.value))
     .filter((state, index) => index % batchCount === batch);
 
+export const getMatchingStates = (states, requestedState) => {
+  if (!requestedState) return states;
+
+  const requestedStates = String(requestedState).split(',').map((state) => state.trim());
+  if (requestedStates.some((state) => !state)) {
+    throw new Error('State names or values must not be empty');
+  }
+
+  const missingStates = requestedStates.filter((requested) =>
+    !states.some((state) => state.value === requested || state.label === requested));
+  if (missingStates.length) {
+    throw new Error(`Unknown state names or values: ${missingStates.join(', ')}`);
+  }
+
+  return states.filter((state) =>
+    requestedStates.some((requested) => state.value === requested || state.label === requested));
+};
+
 const checkFormLink = ($link) => {
   const url = $link.prop('href');
 
@@ -95,9 +113,7 @@ export const submitFormsForRole = (roleLabel) => {
 
       cy.get('select').eq(1).find('option').then(($stateOptions) => {
         const states = getChoices($stateOptions);
-        const matchingStates = requestedState
-          ? states.filter((state) => state.value === requestedState || state.label === requestedState)
-          : states;
+        const matchingStates = getMatchingStates(states, requestedState);
         expect(matchingStates, `state options for ${roleLabel}`).not.to.be.empty;
         const statesToRun = requestedState ? matchingStates : getStateBatch(matchingStates, batch, batchCount);
         cy.log(`State batch ${batch + 1} of ${batchCount}: ${statesToRun.map((state) => state.label).join(', ')}`);
