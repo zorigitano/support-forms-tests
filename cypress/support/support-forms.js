@@ -57,9 +57,11 @@ const openAllFormSections = (requestedFormGroup) => {
 export const submitFormsForRole = (roleLabel) => {
   cy.visit(supportFormsUrl);
 
-  cy.get('select').eq(0).find('option').then(($roleOptions) => {
+  cy.get('select').eq(0).find('option').should(($roleOptions) => {
+    expect(getChoices($roleOptions).map((choice) => choice.label), `role option: ${roleLabel}`)
+      .to.include(roleLabel);
+  }).then(($roleOptions) => {
     const role = getChoices($roleOptions).find((choice) => choice.label === roleLabel);
-    expect(role, `role option: ${roleLabel}`).to.exist;
 
     cy.get('select').eq(0).select(role.value);
 
