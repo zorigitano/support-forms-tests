@@ -1,4 +1,23 @@
-import { getPolicyholderRoles, getStateBatch } from '../support/support-forms';
+import { getMatchingStates, getPolicyholderRoles, getStateBatch } from '../support/support-forms';
+
+describe('Support Forms: State selection', () => {
+  const states = [
+    { value: 'NE', label: 'Nebraska' },
+    { value: 'IA', label: 'Iowa' },
+    { value: 'CA', label: 'California' },
+  ];
+
+  it('selects one or more state names and values', () => {
+    expect(getMatchingStates(states, 'Nebraska')).to.deep.equal([states[0]]);
+    expect(getMatchingStates(states, 'NE, Iowa')).to.deep.equal(states.slice(0, 2));
+    expect(getMatchingStates(states)).to.deep.equal(states);
+  });
+
+  it('rejects unknown and empty state entries', () => {
+    expect(() => getMatchingStates(states, 'Nebraska, Unknown')).to.throw('Unknown state names or values: Unknown');
+    expect(() => getMatchingStates(states, 'Nebraska, ')).to.throw('State names or values must not be empty');
+  });
+});
 
 describe('Support Forms: Policyholder types', () => {
   it('selects one policyholder type or all types by default', () => {
