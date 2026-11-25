@@ -4,6 +4,18 @@
 
 const supportFormsUrl = 'https://www.mutualofomaha.com/support/forms';
 
+const policyholderTypes = {
+  Beneficiary: 'a Beneficiary',
+  'Individual Policyholder': 'an Individual Policyholder',
+  'Plan Administrator': 'a Plan Administrator (Employer)',
+  'Plan Member': 'a Plan Member (Employee)',
+};
+
+export const getPolicyholderRoles = (policyholderType) =>
+  Object.entries(policyholderTypes)
+    .filter(([type]) => !policyholderType || type === policyholderType)
+    .map(([, roleLabel]) => roleLabel);
+
 const getChoices = (options) =>
   Array.from(options)
     .filter((option) => option.value && option.textContent.trim() !== 'Select')

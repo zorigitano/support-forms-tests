@@ -1,4 +1,17 @@
-import { getStateBatch } from '../support/support-forms';
+import { getPolicyholderRoles, getStateBatch } from '../support/support-forms';
+
+describe('Support Forms: Policyholder types', () => {
+  it('selects one policyholder type or all types by default', () => {
+    expect(getPolicyholderRoles('Beneficiary')).to.deep.equal(['a Beneficiary']);
+    expect(getPolicyholderRoles()).to.deep.equal([
+      'a Beneficiary',
+      'an Individual Policyholder',
+      'a Plan Administrator (Employer)',
+      'a Plan Member (Employee)',
+    ]);
+    expect(getPolicyholderRoles('Unknown')).to.deep.equal([]);
+  });
+});
 
 describe('Support Forms: State batching', () => {
   it('covers every state once regardless of dropdown order', () => {
