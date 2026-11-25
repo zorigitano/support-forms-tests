@@ -1,4 +1,4 @@
-name: Cypress
+name: Support Forms Test for Broken Links
 
 on:
   workflow_dispatch:
