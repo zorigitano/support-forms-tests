@@ -12,6 +12,11 @@ const getChoices = (options) =>
       label: option.textContent.trim(),
     }));
 
+export const getStateBatch = (states, batch, batchCount) =>
+  [...states]
+    .sort((first, second) => first.value.localeCompare(second.value))
+    .filter((state, index) => index % batchCount === batch);
+
 const checkFormLink = ($link) => {
   const url = $link.prop('href');
 
@@ -65,13 +70,25 @@ export const submitFormsForRole = (roleLabel) => {
 
     cy.get('select').eq(0).select(role.value);
 
-    cy.env(['state', 'formGroup']).then(({ state: requestedState, formGroup: requestedFormGroup }) => {
+    cy.env(['state', 'formGroup', 'stateBatch', 'stateBatchCount']).then(({
+      state: requestedState,
+      formGroup: requestedFormGroup,
+      stateBatch = 0,
+      stateBatchCount = 1,
+    }) => {
+      const batch = Number(stateBatch);
+      const batchCount = Number(stateBatchCount);
+      expect(Number.isInteger(batchCount) && batchCount > 0, 'valid state batch count').to.be.true;
+      expect(Number.isInteger(batch) && batch >= 0 && batch < batchCount, 'valid state batch').to.be.true;
+
       cy.get('select').eq(1).find('option').then(($stateOptions) => {
         const states = getChoices($stateOptions);
-        const statesToRun = requestedState
+        const matchingStates = requestedState
           ? states.filter((state) => state.value === requestedState || state.label === requestedState)
           : states;
-        expect(statesToRun, `state options for ${roleLabel}`).not.to.be.empty;
+        expect(matchingStates, `state options for ${roleLabel}`).not.to.be.empty;
+        const statesToRun = requestedState ? matchingStates : getStateBatch(matchingStates, batch, batchCount);
+        cy.log(`State batch ${batch + 1} of ${batchCount}: ${statesToRun.map((state) => state.label).join(', ')}`);
 
         statesToRun.forEach((state) => {
           cy.get('select').eq(0).select(role.value);

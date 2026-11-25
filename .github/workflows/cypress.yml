@@ -20,6 +20,7 @@ jobs:
       fail-fast: false
       max-parallel: 4
       matrix:
+        batch: ${{ fromJSON(inputs.state && '[0]' || '[0,1,2,3,4]') }}
         spec:
           - cypress/e2e/support-forms-beneficiary.cy.js
           - cypress/e2e/support-forms-individual-policyholder.cy.js
@@ -42,11 +43,15 @@ jobs:
       - name: Install Cypress binary
         run: npx cypress install
 
+      - name: Check state batching
+        if: ${{ matrix.spec == 'cypress/e2e/support-forms-beneficiary.cy.js' && matrix.batch == 0 }}
+        run: npx cypress run --spec cypress/e2e/support-forms-batching.cy.js
+
       - name: Run Cypress spec
         env:
           CYPRESS_STATE: ${{ inputs.state }}
           CYPRESS_FORM_GROUP: ${{ inputs.formGroup }}
-        run: npx cypress run --spec "${{ matrix.spec }}" --env "state=$CYPRESS_STATE,formGroup=$CYPRESS_FORM_GROUP"
+        run: npx cypress run --spec "${{ matrix.spec }}" --env "state=$CYPRESS_STATE,formGroup=$CYPRESS_FORM_GROUP,stateBatch=${{ matrix.batch }},stateBatchCount=5"
 
       - name: Upload npm debug logs on failure
         if: ${{ failure() }}
