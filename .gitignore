@@ -1,3 +1,4 @@
 node_modules
 .vscode/
+cypress/fixtures/discovered-form-links.json
 

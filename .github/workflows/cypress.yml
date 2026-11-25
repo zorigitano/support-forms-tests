@@ -104,12 +104,17 @@ jobs:
         if: ${{ matrix.batch == 0 }}
         run: npx cypress run --spec cypress/e2e/support-forms-batching.cy.js
 
-      - name: Run Cypress spec
+      - name: Discover form links
         env:
           SUPPORT_FORMS_STATE: ${{ inputs.state }}
           CYPRESS_FORM_GROUP: ${{ inputs.formGroup }}
           POLICYHOLDER_TYPE: ${{ inputs.policyholderType }}
         run: npx cypress run --spec cypress/e2e/support-forms.cy.js --env "policyholderType=$POLICYHOLDER_TYPE,formGroup=$CYPRESS_FORM_GROUP,stateBatch=${{ matrix.batch }},stateBatchCount=5"
+
+      - name: Test form links
+        env:
+          SUPPORT_FORMS_CHECK_LINKS: '1'
+        run: npx cypress run --spec cypress/e2e/support-form-links.cy.js
 
       - name: Upload npm debug logs on failure
         if: ${{ failure() }}
