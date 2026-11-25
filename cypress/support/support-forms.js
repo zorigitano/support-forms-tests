@@ -47,15 +47,17 @@ export const getMatchingStates = (states, requestedState) => {
     requestedStates.some((requested) => state.value === requested || state.label === requested));
 };
 
-const checkFormLink = ($link) => {
-  const url = $link.prop('href');
+const openAllFormSections = (requestedFormGroup, roleLabel, state, links) => {
+  const collectLink = ($link) => {
+    links.push({
+      role: roleLabel,
+      state: state.label,
+      formGroup: $link.closest('div.Accordion-panel').find('button.Accordion-panelTrigger').first().text().trim(),
+      label: $link.text().trim(),
+      url: $link.prop('href'),
+    });
+  };
 
-  cy.request({ url, failOnStatusCode: false })
-    .its('status')
-    .should('equal', 200);
-};
-
-const openAllFormSections = (requestedFormGroup) => {
   if (requestedFormGroup) {
     cy.get('button.Accordion-panelTrigger')
       .filter((_, trigger) => trigger.textContent.trim() === requestedFormGroup)
@@ -71,7 +73,7 @@ const openAllFormSections = (requestedFormGroup) => {
           .closest('div.Accordion-panel')
           .find('div.Accordion-panelBody a.Form-link')
           .should(($links) => expect($links.length).to.be.greaterThan(0))
-          .each(checkFormLink);
+          .each(collectLink);
       });
     return;
   }
@@ -86,10 +88,10 @@ const openAllFormSections = (requestedFormGroup) => {
 
   cy.get('div.Accordion-panelBody a.Form-link')
     .should(($links) => expect($links.length).to.be.greaterThan(0))
-    .each(checkFormLink);
+    .each(collectLink);
 };
 
-export const submitFormsForRole = (roleLabel) => {
+  export const submitFormsForRole = (roleLabel, links) => {
   cy.visit(supportFormsUrl);
 
   cy.get('select').eq(0).find('option').should(($roleOptions) => {
@@ -124,7 +126,7 @@ export const submitFormsForRole = (roleLabel) => {
           cy.contains('button', 'View Forms').click();
           cy.get('select').eq(0).should('have.value', role.value);
           cy.get('select').eq(1).should('have.value', state.value);
-          openAllFormSections(requestedFormGroup);
+          openAllFormSections(requestedFormGroup, roleLabel, state, links);
         });
       });
     });
